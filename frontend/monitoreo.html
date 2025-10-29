@@ -3,90 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema IoT - Examen Tema 2</title>
+    <title>Monitoreo IoT - Examen Tema 2</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        body { 
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%); 
             min-height: 100vh;
         }
-        .hero-section {
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 50px;
-            margin-top: 50px;
-            color: white;
+        .card { 
+            border: none; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+            transition: transform 0.3s; 
+            margin-bottom: 20px;
         }
-        .feature-card {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            margin: 15px 0;
-            transition: transform 0.3s;
-            text-align: center;
+        .card:hover { 
+            transform: translateY(-5px); 
         }
-        .feature-card:hover {
-            transform: translateY(-10px);
+        .stat-card { 
+            background: linear-gradient(45deg, #667eea, #764ba2); 
+            color: white; 
         }
-        .btn-module {
-            padding: 15px 30px;
-            font-size: 1.2rem;
+        .log-container { 
+            height: 400px; 
+            overflow-y: auto; 
+            background: #1a1a1a; 
+            color: #00ff00; 
+            font-family: 'Courier New', monospace;
+            padding: 15px;
             border-radius: 10px;
-            margin: 10px;
+        }
+        .evento { 
+            border-left: 3px solid #007bff; 
+            padding: 8px; 
+            margin: 5px 0; 
+            background: rgba(255,255,255,0.1); 
+            border-radius: 5px;
+        }
+        .navbar {
+            border-radius: 0 0 15px 15px;
+            margin-bottom: 20px;
+        }
+        .dispositivo-card {
+            background: linear-gradient(45deg, #495057, #6c757d);
+            color: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .chart-container {
+            position: relative;
+            height: 200px;
+            width: 100%;
         }
     </style>
 </head>
 <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-chart-line"></i> Monitoreo IoT - Examen Tema 2
+            </a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="index.html">
+                    <i class="fas fa-home"></i> Inicio
+                </a>
+                <a class="nav-link" href="control.html">
+                    <i class="fas fa-gamepad"></i> Control
+                </a>
+            </div>
+        </div>
+    </nav>
+
     <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="hero-section text-center">
-                    <h1 class="display-4 mb-4">
-                        <i class="fas fa-robot"></i> Sistema IoT
-                    </h1>
-                    <p class="lead mb-4">Examen Tema 2 - Arquitectura y Tecnologías de IoT</p>
-                    <p class="mb-5">Sistema completo de control y monitoreo para dispositivos IoT desarrollado con Bootstrap, JavaScript y arquitectura moderna.</p>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="feature-card">
-                                <i class="fas fa-gamepad fa-3x text-primary mb-3"></i>
-                                <h3>Control</h3>
-                                <p class="text-muted">Interfaz para controlar movimientos y ejecutar secuencias del dispositivo IoT</p>
-                                <a href="control.html" class="btn btn-primary btn-module">
-                                    <i class="fas fa-play"></i> Ir al Control
-                                </a>
-                            </div>
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-robot fa-3x mb-3"></i>
+                        <h3 id="totalDispositivos">2</h3>
+                        <p class="mb-0">Dispositivos Activos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-sync-alt fa-3x mb-3"></i>
+                        <h3 id="totalMovimientos">0</h3>
+                        <p class="mb-0">Movimientos Totales</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                        <h3 id="totalObstaculos">0</h3>
+                        <p class="mb-0">Obstáculos Detectados</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-play-circle fa-3x mb-3"></i>
+                        <h3 id="totalDemos">0</h3>
+                        <p class="mb-0">Demos Ejecutadas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-dark text-white">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="fas fa-microchip"></i> Dispositivos Conectados</h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="listaDispositivos" class="row">
+                            <!-- Los dispositivos se cargarán aquí -->
                         </div>
-                        <div class="col-md-6">
-                            <div class="feature-card">
-                                <i class="fas fa-chart-line fa-3x text-success mb-3"></i>
-                                <h3>Monitoreo</h3>
-                                <p class="text-muted">Panel de monitoreo en tiempo real con estadísticas y gráficos</p>
-                                <a href="monitoreo.html" class="btn btn-success btn-module">
-                                    <i class="fas fa-chart-bar"></i> Ver Monitoreo
-                                </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-dark text-white">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="fas fa-broadcast-tower"></i> Eventos en Tiempo Real</h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="logEventos" class="log-container">
+                            <div class="text-center text-muted">
+                                <i class="fas fa-satellite-dish"></i> Inicializando sistema de monitoreo...
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
 
-                    <div class="mt-5">
-                        <h4>Tecnologías Implementadas</h4>
-                        <div class="row mt-4">
-                            <div class="col-md-3">
-                                <span class="badge bg-primary p-2">Bootstrap 5</span>
-                            </div>
-                            <div class="col-md-3">
-                                <span class="badge bg-success p-2">JavaScript</span>
-                            </div>
-                            <div class="col-md-3">
-                                <span class="badge bg-info p-2">Chart.js</span>
-                            </div>
-                            <div class="col-md-3">
-                                <span class="badge bg-warning p-2">GitHub Pages</span>
-                            </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Tipos de Movimiento</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="chartMovimientos"></canvas>
+                        </div>
+                        <div id="sinDatosMovimientos" class="text-center text-muted mt-3">
+                            <i class="fas fa-chart-bar fa-2x mb-2"></i>
+                            <p>No hay movimientos registrados</p>
+                            <small>Los movimientos aparecerán aquí cuando se ejecuten</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Distribución de Eventos</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="chartEventos"></canvas>
+                        </div>
+                        <div id="sinDatosEventos" class="text-center text-muted mt-3">
+                            <i class="fas fa-chart-pie fa-2x mb-2"></i>
+                            <p>No hay eventos registrados</p>
+                            <small>Los eventos aparecerán aquí cuando ocurran</small>
                         </div>
                     </div>
                 </div>
@@ -95,5 +188,289 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let estadisticas = {
+            movimientos: 0,
+            obstaculos: 0,
+            demos: 0,
+            tiposMovimiento: {
+                'adelante': 0,
+                'atras': 0,
+                'izquierda': 0,
+                'derecha': 0,
+                'giro_90': 0,
+                'giro_360': 0,
+                'detener': 0
+            }
+        };
+
+        const dispositivos = [
+            {
+                dispositivo_id: 1,
+                nombre: "IoT Robot Alpha",
+                ip_address: "192.168.1.100",
+                ciudad: "Ciudad de México",
+                pais: "México",
+                estado: "ACTIVO"
+            },
+            {
+                dispositivo_id: 2,
+                nombre: "IoT Robot Beta", 
+                ip_address: "192.168.1.101",
+                ciudad: "Guadalajara",
+                pais: "México",
+                estado: "ACTIVO"
+            }
+        ];
+
+        function cargarDispositivos() {
+            const listaDiv = document.getElementById('listaDispositivos');
+            listaDiv.innerHTML = '';
+            
+            dispositivos.forEach(disp => {
+                const dispCard = '<div class="col-md-6 mb-3">' +
+                    '<div class="dispositivo-card">' +
+                    '<h5><i class="fas fa-microchip"></i> ' + disp.nombre + '</h5>' +
+                    '<p class="mb-1"><strong>ID:</strong> ' + disp.dispositivo_id + '</p>' +
+                    '<p class="mb-1"><strong>IP:</strong> ' + disp.ip_address + '</p>' +
+                    '<p class="mb-1"><strong>Ubicación:</strong> ' + disp.ciudad + ', ' + disp.pais + '</p>' +
+                    '<p class="mb-0">' +
+                    '<strong>Estado:</strong> ' +
+                    '<span class="badge bg-success">' + disp.estado + '</span>' +
+                    '</p>' +
+                    '</div>' +
+                    '</div>';
+                listaDiv.innerHTML += dispCard;
+            });
+        }
+
+        function procesarEvento(tipo, valor) {
+            switch(tipo) {
+                case 'movimiento':
+                    estadisticas.movimientos++;
+                    if (estadisticas.tiposMovimiento.hasOwnProperty(valor)) {
+                        estadisticas.tiposMovimiento[valor]++;
+                    }
+                    break;
+                case 'obstaculo':
+                    estadisticas.obstaculos++;
+                    break;
+                case 'demo':
+                    estadisticas.demos++;
+                    break;
+            }
+
+            actualizarEstadisticas();
+            actualizarGraficos();
+            
+            let mensaje = '';
+            let icono = '📡';
+            
+            switch(tipo) {
+                case 'movimiento':
+                    icono = '🚗';
+                    if (valor.includes('giro')) icono = '🔄';
+                    if (valor === 'detener') icono = '🛑';
+                    mensaje = 'MOVIMIENTO: ' + valor.toUpperCase() + ' - Robot Alpha';
+                    break;
+                case 'obstaculo':
+                    icono = '🚨';
+                    mensaje = 'OBSTÁCULO: Detectado a ' + valor + 'cm - Protocolo de evasión activado';
+                    break;
+                case 'demo':
+                    icono = '🤖';
+                    mensaje = 'DEMO: Secuencia ' + valor + ' - Navegación automática iniciada';
+                    break;
+            }
+            
+            agregarLog(icono + ' ' + mensaje);
+        }
+
+        function actualizarEstadisticas() {
+            document.getElementById('totalMovimientos').textContent = estadisticas.movimientos;
+            document.getElementById('totalObstaculos').textContent = estadisticas.obstaculos;
+            document.getElementById('totalDemos').textContent = estadisticas.demos;
+        }
+
+        function actualizarGraficos() {
+            const ctxMov = document.getElementById('chartMovimientos');
+            const sinDatosMov = document.getElementById('sinDatosMovimientos');
+            
+            if (ctxMov) {
+                if (window.movimientosChart) {
+                    window.movimientosChart.destroy();
+                }
+                
+                const tiposConDatos = Object.entries(estadisticas.tiposMovimiento)
+                    .filter(([tipo, count]) => count > 0);
+                
+                if (tiposConDatos.length > 0) {
+                    sinDatosMov.style.display = 'none';
+                    
+                    const labels = tiposConDatos.map(([tipo, count]) => 
+                        tipo.charAt(0).toUpperCase() + tipo.slice(1).replace('_', ' ')
+                    );
+                    const data = tiposConDatos.map(([tipo, count]) => count);
+                    
+                    window.movimientosChart = new Chart(ctxMov, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Cantidad',
+                                data: data,
+                                backgroundColor: [
+                                    '#007bff', '#28a745', '#ffc107', '#dc3545', 
+                                    '#6f42c1', '#17a2b8', '#20c997'
+                                ],
+                                borderColor: [
+                                    '#0056b3', '#1e7e34', '#e0a800', '#c82333',
+                                    '#563d7c', '#138496', '#1aa179'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Distribución de Movimientos',
+                                    color: '#333',
+                                    font: {
+                                        size: 14
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        color: '#666'
+                                    },
+                                    grid: {
+                                        color: 'rgba(0,0,0,0.1)'
+                                    }
+                                },
+                                x: {
+                                    ticks: {
+                                        color: '#666'
+                                    },
+                                    grid: {
+                                        color: 'rgba(0,0,0,0.1)'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    sinDatosMov.style.display = 'block';
+                }
+            }
+
+            const ctxEv = document.getElementById('chartEventos');
+            const sinDatosEv = document.getElementById('sinDatosEventos');
+            
+            if (ctxEv) {
+                if (window.eventosChart) {
+                    window.eventosChart.destroy();
+                }
+                
+                const totalEventos = estadisticas.movimientos + estadisticas.obstaculos + estadisticas.demos;
+                
+                if (totalEventos > 0) {
+                    sinDatosEv.style.display = 'none';
+                    
+                    window.eventosChart = new Chart(ctxEv, {
+                        type: 'pie',
+                        data: {
+                            labels: ['Movimientos', 'Obstáculos', 'Demos'],
+                            datasets: [{
+                                data: [estadisticas.movimientos, estadisticas.obstaculos, estadisticas.demos],
+                                backgroundColor: ['#007bff', '#ffc107', '#28a745'],
+                                borderColor: ['#0056b3', '#e0a800', '#1e7e34'],
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: 'Distribución de Eventos',
+                                    color: '#333',
+                                    font: {
+                                        size: 14
+                                    }
+                                },
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        color: '#666',
+                                        padding: 15
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    sinDatosEv.style.display = 'block';
+                }
+            }
+        }
+
+        function agregarLog(mensaje) {
+            const logDiv = document.getElementById('logEventos');
+            const fecha = new Date().toLocaleTimeString();
+            const logItem = document.createElement('div');
+            logItem.className = 'evento';
+            logItem.innerHTML = '<small class="text-info">[' + fecha + ']</small> ' + mensaje;
+            
+            if (logDiv.children.length === 1 && logDiv.children[0].classList.contains('text-center')) {
+                logDiv.innerHTML = '';
+            }
+            
+            logDiv.appendChild(logItem);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            if (logDiv.children.length > 100) {
+                logDiv.removeChild(logDiv.firstChild);
+            }
+        }
+
+        // Escuchar eventos del control
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'ultimoEventoIoT' && e.newValue) {
+                const evento = JSON.parse(e.newValue);
+                if (evento.tipo && evento.valor) {
+                    procesarEvento(evento.tipo, evento.valor);
+                }
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarDispositivos();
+            actualizarEstadisticas();
+            actualizarGraficos();
+            
+            agregarLog('🛰️  SISTEMA: Monitoreo IoT Inicializado - Examen Tema 2');
+            agregarLog('📊 MODO: Demo - Datos simulados para GitHub Pages');
+            agregarLog('🔍 MONITOREO: 2 dispositivos detectados');
+            agregarLog('📈 ESTADÍSTICAS: Sistema listo para registrar eventos');
+            agregarLog('💡 CONSEJO: Abre la página de Control para generar eventos');
+        });
+
+        setTimeout(() => {
+            if (estadisticas.movimientos === 0) {
+                agregarLog('💡 SISTEMA: Ejecuta comandos en la página de Control para ver estadísticas en tiempo real');
+            }
+        }, 3000);
+    </script>
 </body>
 </html>
