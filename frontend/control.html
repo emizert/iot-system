@@ -50,6 +50,7 @@
     </style>
 </head>
 <body>
+    <!-- Barra de Navegación -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="#">
@@ -67,6 +68,7 @@
     </nav>
 
     <div class="container">
+        <!-- Estado de Conexión -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card">
@@ -75,19 +77,19 @@
                             <div class="col-md-4">
                                 <h5><i class="fas fa-server"></i> Backend</h5>
                                 <div class="alert alert-success" id="estadoBackend">
-                                    <i class="fas fa-check-circle"></i> <strong>MODO DEMO</strong> - GitHub Pages
+                                    <i class="fas fa-spinner fa-spin"></i> Conectando...
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <h5><i class="fas fa-plug"></i> WebSockets</h5>
-                                <div class="alert alert-success" id="estadoWebSocket">
-                                    <i class="fas fa-check-circle"></i> <strong>SIMULADO</strong> - Frontend Only
+                                <div class="alert alert-warning" id="estadoWebSocket">
+                                    <i class="fas fa-spinner fa-spin"></i> Conectando...
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <h5><i class="fas fa-database"></i> Base de Datos</h5>
-                                <div class="alert alert-success" id="estadoBD">
-                                    <i class="fas fa-check-circle"></i> <strong>LOCAL</strong> - Datos de Ejemplo
+                                <div class="alert alert-info" id="estadoBD">
+                                    <i class="fas fa-spinner fa-spin"></i> Verificando...
                                 </div>
                             </div>
                         </div>
@@ -96,13 +98,16 @@
             </div>
         </div>
 
+        <!-- Controles -->
         <div class="row">
+            <!-- Control de Movimiento -->
             <div class="col-md-6">
                 <div class="card h-100">
                     <div class="card-header bg-primary text-white">
                         <h4 class="mb-0"><i class="fas fa-gamepad"></i> Control de Movimiento</h4>
                     </div>
                     <div class="card-body text-center">
+                        <!-- Fila Superior: Adelante -->
                         <div class="row mb-2">
                             <div class="col-12">
                                 <button class="btn btn-success btn-control w-100" onclick="enviarComando('movimiento', 'adelante')">
@@ -110,6 +115,8 @@
                                 </button>
                             </div>
                         </div>
+                        
+                        <!-- Fila Media: Izquierda y Derecha -->
                         <div class="row mb-2">
                             <div class="col-6">
                                 <button class="btn btn-primary btn-control w-100" onclick="enviarComando('movimiento', 'izquierda')">
@@ -122,6 +129,8 @@
                                 </button>
                             </div>
                         </div>
+                        
+                        <!-- Fila Inferior: Atrás y Detener -->
                         <div class="row mb-2">
                             <div class="col-6">
                                 <button class="btn btn-warning btn-control w-100" onclick="enviarComando('movimiento', 'atras')">
@@ -134,6 +143,8 @@
                                 </button>
                             </div>
                         </div>
+
+                        <!-- Fila Giros: 90° y 360° -->
                         <div class="row">
                             <div class="col-6">
                                 <button class="btn btn-info btn-control w-100" onclick="enviarComando('movimiento', 'giro_90')">
@@ -150,12 +161,14 @@
                 </div>
             </div>
 
+            <!-- Secuencias y Obstáculos -->
             <div class="col-md-6">
                 <div class="card h-100">
                     <div class="card-header bg-success text-white">
                         <h4 class="mb-0"><i class="fas fa-cogs"></i> Secuencias y Sensores</h4>
                     </div>
                     <div class="card-body text-center">
+                        <!-- Secuencias Demo -->
                         <h5><i class="fas fa-play-circle"></i> Secuencias Demo</h5>
                         <div class="row mb-3">
                             <div class="col-6">
@@ -170,6 +183,7 @@
                             </div>
                         </div>
 
+                        <!-- Obstáculos -->
                         <h5><i class="fas fa-exclamation-triangle"></i> Detección de Obstáculos</h5>
                         <div class="row">
                             <div class="col-12">
@@ -183,6 +197,7 @@
             </div>
         </div>
 
+        <!-- Log de Eventos -->
         <div class="row mt-4">
             <div class="col-12">
                 <div class="card">
@@ -192,7 +207,7 @@
                     <div class="card-body">
                         <div id="logEventos" class="log-container">
                             <div class="text-center text-muted">
-                                <i class="fas fa-clock"></i> Sistema IoT Inicializado - Modo Demo
+                                <i class="fas fa-clock"></i> Esperando eventos...
                             </div>
                         </div>
                     </div>
@@ -201,45 +216,84 @@
         </div>
     </div>
 
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
     <script>
-        function enviarComando(tipo, valor) {
-            const fecha = new Date();
-            let mensaje = '';
-            let icono = '📤';
+        const socket = io('http://localhost:5500');
+        let dispositivoId = 1;
 
-            switch(tipo) {
-                case 'movimiento':
-                    mensaje = '🚗 MOVIMIENTO: ' + valor.toUpperCase() + ' ejecutado correctamente';
-                    icono = '🚗';
-                    if (valor.includes('giro')) icono = '🔄';
-                    if (valor === 'detener') icono = '🛑';
-                    break;
-                case 'demo':
-                    mensaje = '🤖 DEMO: Secuencia ' + valor + ' iniciada - Patrón de navegación automática';
-                    icono = '🤖';
-                    break;
-                case 'obstaculo':
-                    mensaje = '🚨 OBSTÁCULO: Detectado a ' + valor + 'cm - Activando protocolo de evasión';
-                    icono = '🚨';
-                    break;
+        // ==================== WEBSOCKET EVENTS ====================
+        socket.on('connect', () => {
+            document.getElementById('estadoWebSocket').innerHTML = 
+                '<i class="fas fa-check-circle"></i> <strong>CONECTADO</strong> - WebSockets activos';
+            agregarLog('🔌 WebSocket: Conexión establecida con el servidor');
+            verificarBackend();
+        });
+
+        socket.on('movimiento_controlado', (data) => {
+            console.log('📡 Evento recibido en CONTROL:', data);
+            let icono = '🚗';
+            if (data.tipo_movimiento.includes('giro')) {
+                icono = '🔄';
+            }
+            agregarLog(`${icono} MOVIMIENTO: ${data.tipo_movimiento.toUpperCase()} - Dispositivo ${data.dispositivo_id}`);
+        });
+
+        socket.on('obstaculo_detectado', (data) => {
+            console.log('📡 Evento recibido en CONTROL:', data);
+            agregarLog(`🚨 OBSTÁCULO: ${data.distancia}cm - Dispositivo ${data.dispositivo_id}`);
+        });
+
+        socket.on('demo_ejecutada', (data) => {
+            console.log('📡 Evento recibido en CONTROL:', data);
+            agregarLog(`🤖 DEMO: Secuencia ${data.secuencia_id} - Dispositivo ${data.dispositivo_id}`);
+        });
+
+        socket.on('disconnect', () => {
+            document.getElementById('estadoWebSocket').innerHTML = 
+                '<i class="fas fa-times-circle"></i> <strong>DESCONECTADO</strong>';
+            agregarLog('❌ WebSocket: Conexión perdida');
+        });
+
+        // ==================== FUNCIONES PRINCIPALES ====================
+        async function enviarComando(tipo, valor) {
+            let url = '';
+            let body = { dispositivo_id: dispositivoId };
+
+            if (tipo === 'movimiento') {
+                url = '/api/control/movimiento';
+                body.tipo_movimiento = valor;
+            } else if (tipo === 'obstaculo') {
+                url = '/api/control/obstaculo';
+                body.distancia = valor;
+            } else if (tipo === 'demo') {
+                url = '/api/control/demo';
+                body.secuencia_id = valor;
             }
 
-            // Mostrar mensaje inmediato
-            agregarLog('📤 ENVIANDO: Comando ' + tipo + ' - ' + valor + ' al dispositivo IoT');
-            
-            // Simular respuesta del servidor
-            setTimeout(() => {
-                agregarLog(icono + ' ' + mensaje);
+            try {
+                agregarLog(`📤 ENVIANDO COMANDO: ${tipo} - ${valor}...`);
                 
-                // Disparar evento para monitoreo
-                const evento = { tipo, valor, timestamp: new Date().toISOString() };
-                localStorage.setItem('ultimoEventoIoT', JSON.stringify(evento));
-                window.dispatchEvent(new StorageEvent('storage', {
-                    key: 'ultimoEventoIoT',
-                    newValue: JSON.stringify(evento)
-                }));
-            }, 800);
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    agregarLog(`✅ COMANDO EXITOSO: ${tipo} - ${valor}`);
+                } else {
+                    agregarLog(`❌ ERROR: Comando ${tipo} falló`);
+                }
+            } catch (error) {
+                console.error('❌ Error:', error);
+                agregarLog(`❌ ERROR DE CONEXIÓN: No se pudo enviar ${tipo}`);
+            }
         }
 
         function simularObstaculo() {
@@ -247,13 +301,51 @@
             enviarComando('obstaculo', parseFloat(distancia));
         }
 
+        async function verificarBackend() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                
+                document.getElementById('estadoBackend').innerHTML = 
+                    '<i class="fas fa-check-circle"></i> <strong>ACTIVO</strong> - Puerto 5500';
+                
+                // Verificar BD
+                const responseBD = await fetch('/api/dispositivos');
+                const dispositivos = await responseBD.json();
+                
+                if (dispositivos.error) {
+                    document.getElementById('estadoBD').innerHTML = 
+                        '<i class="fas fa-times-circle"></i> <strong>ERROR BD</strong>';
+                    agregarLog('❌ ERROR: Problema con la base de datos');
+                } else {
+                    document.getElementById('estadoBD').innerHTML = 
+                        '<i class="fas fa-check-circle"></i> <strong>CONECTADA</strong> - SQLite';
+                    agregarLog('🗄️ Base de datos: Conexión exitosa');
+                    
+                    if (dispositivos.length > 0) {
+                        dispositivoId = dispositivos[0].dispositivo_id;
+                        agregarLog(`📱 Dispositivo seleccionado: ${dispositivos[0].nombre}`);
+                        agregarLog(`📍 Ubicación: ${dispositivos[0].ciudad}, ${dispositivos[0].pais}`);
+                    } else {
+                        agregarLog('⚠️ No hay dispositivos en la base de datos');
+                    }
+                }
+                
+            } catch (error) {
+                document.getElementById('estadoBackend').innerHTML = 
+                    '<i class="fas fa-times-circle"></i> <strong>ERROR</strong> - Servidor no responde';
+                agregarLog('❌ ERROR: No se puede conectar al servidor backend');
+            }
+        }
+
         function agregarLog(mensaje) {
             const logDiv = document.getElementById('logEventos');
             const fecha = new Date().toLocaleTimeString();
             const logItem = document.createElement('div');
             logItem.className = 'evento';
-            logItem.innerHTML = '<small class="text-muted">[' + fecha + ']</small> ' + mensaje;
+            logItem.innerHTML = `<small class="text-muted">[${fecha}]</small> ${mensaje}`;
             
+            // Si es el primer mensaje (el de esperando), lo removemos
             if (logDiv.children.length === 1 && logDiv.children[0].classList.contains('text-center')) {
                 logDiv.innerHTML = '';
             }
@@ -261,28 +353,14 @@
             logDiv.appendChild(logItem);
             logDiv.scrollTop = logDiv.scrollHeight;
             
+            // Limitar a 50 eventos
             if (logDiv.children.length > 50) {
                 logDiv.removeChild(logDiv.firstChild);
             }
         }
 
-        // Escuchar eventos del monitoreo
-        window.addEventListener('storage', function(e) {
-            if (e.key === 'ultimoEventoIoT' && e.newValue) {
-                const evento = JSON.parse(e.newValue);
-                if (evento.tipo && evento.valor) {
-                    agregarLog('📡 RECIBIDO: ' + evento.tipo + ' - ' + evento.valor + ' desde Monitoreo');
-                }
-            }
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            agregarLog('🔧 Sistema IoT Inicializado - Examen Tema 2');
-            agregarLog('🌐 Frontend: GitHub Pages - Modo Demo Activo');
-            agregarLog('📱 Dispositivo: IoT Robot #1 - Conectado');
-            agregarLog('📍 Ubicación: Laboratorio IoT - Universidad');
-            agregarLog('✅ Sistema listo para recibir comandos');
-        });
+        // Inicializar
+        verificarBackend();
     </script>
 </body>
 </html>

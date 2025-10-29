@@ -61,6 +61,7 @@
     </style>
 </head>
 <body>
+    <!-- Barra de Navegación -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="#">
@@ -78,12 +79,13 @@
     </nav>
 
     <div class="container">
+        <!-- Panel de Estado -->
         <div class="row mb-4">
             <div class="col-md-3 mb-3">
                 <div class="card stat-card">
                     <div class="card-body text-center">
                         <i class="fas fa-robot fa-3x mb-3"></i>
-                        <h3 id="totalDispositivos">2</h3>
+                        <h3 id="totalDispositivos">0</h3>
                         <p class="mb-0">Dispositivos Activos</p>
                     </div>
                 </div>
@@ -117,6 +119,7 @@
             </div>
         </div>
 
+        <!-- Información de Dispositivos -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card bg-dark text-white">
@@ -125,13 +128,19 @@
                     </div>
                     <div class="card-body">
                         <div id="listaDispositivos" class="row">
-                            <!-- Los dispositivos se cargarán aquí -->
+                            <div class="col-12 text-center">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Cargando dispositivos...</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Log de Eventos en Tiempo Real -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card bg-dark text-white">
@@ -149,6 +158,7 @@
             </div>
         </div>
 
+        <!-- Estadísticas de Actividad -->
         <div class="row">
             <div class="col-md-6">
                 <div class="card">
@@ -159,7 +169,7 @@
                         <div class="chart-container">
                             <canvas id="chartMovimientos"></canvas>
                         </div>
-                        <div id="sinDatosMovimientos" class="text-center text-muted mt-3">
+                        <div id="sinDatosMovimientos" class="text-center text-muted mt-3" style="display: none;">
                             <i class="fas fa-chart-bar fa-2x mb-2"></i>
                             <p>No hay movimientos registrados</p>
                             <small>Los movimientos aparecerán aquí cuando se ejecuten</small>
@@ -176,7 +186,7 @@
                         <div class="chart-container">
                             <canvas id="chartEventos"></canvas>
                         </div>
-                        <div id="sinDatosEventos" class="text-center text-muted mt-3">
+                        <div id="sinDatosEventos" class="text-center text-muted mt-3" style="display: none;">
                             <i class="fas fa-chart-pie fa-2x mb-2"></i>
                             <p>No hay eventos registrados</p>
                             <small>Los eventos aparecerán aquí cuando ocurran</small>
@@ -187,9 +197,12 @@
         </div>
     </div>
 
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        const socket = io('http://localhost:5500');
         let estadisticas = {
             movimientos: 0,
             obstaculos: 0,
@@ -205,86 +218,169 @@
             }
         };
 
-        const dispositivos = [
-            {
-                dispositivo_id: 1,
-                nombre: "IoT Robot Alpha",
-                ip_address: "192.168.1.100",
-                ciudad: "Ciudad de México",
-                pais: "México",
-                estado: "ACTIVO"
-            },
-            {
-                dispositivo_id: 2,
-                nombre: "IoT Robot Beta", 
-                ip_address: "192.168.1.101",
-                ciudad: "Guadalajara",
-                pais: "México",
-                estado: "ACTIVO"
-            }
-        ];
+        // ==================== WEBSOCKET EVENTS ====================
+        socket.on('connect', () => {
+            agregarLog('🛰️  SISTEMA: Conectado al servidor - Monitoreo activo');
+            cargarDatosReales();
+        });
 
-        function cargarDispositivos() {
-            const listaDiv = document.getElementById('listaDispositivos');
-            listaDiv.innerHTML = '';
+        socket.on('movimiento_controlado', (data) => {
+            console.log('📡 Evento recibido en MONITOREO:', data);
             
-            dispositivos.forEach(disp => {
-                const dispCard = '<div class="col-md-6 mb-3">' +
-                    '<div class="dispositivo-card">' +
-                    '<h5><i class="fas fa-microchip"></i> ' + disp.nombre + '</h5>' +
-                    '<p class="mb-1"><strong>ID:</strong> ' + disp.dispositivo_id + '</p>' +
-                    '<p class="mb-1"><strong>IP:</strong> ' + disp.ip_address + '</p>' +
-                    '<p class="mb-1"><strong>Ubicación:</strong> ' + disp.ciudad + ', ' + disp.pais + '</p>' +
-                    '<p class="mb-0">' +
-                    '<strong>Estado:</strong> ' +
-                    '<span class="badge bg-success">' + disp.estado + '</span>' +
-                    '</p>' +
-                    '</div>' +
-                    '</div>';
-                listaDiv.innerHTML += dispCard;
-            });
-        }
-
-        function procesarEvento(tipo, valor) {
-            switch(tipo) {
-                case 'movimiento':
-                    estadisticas.movimientos++;
-                    if (estadisticas.tiposMovimiento.hasOwnProperty(valor)) {
-                        estadisticas.tiposMovimiento[valor]++;
-                    }
-                    break;
-                case 'obstaculo':
-                    estadisticas.obstaculos++;
-                    break;
-                case 'demo':
-                    estadisticas.demos++;
-                    break;
+            // Actualizar estadísticas
+            estadisticas.movimientos++;
+            
+            // Contar por tipo de movimiento
+            const tipo = data.tipo_movimiento;
+            if (estadisticas.tiposMovimiento.hasOwnProperty(tipo)) {
+                estadisticas.tiposMovimiento[tipo]++;
+            } else {
+                estadisticas.tiposMovimiento[tipo] = 1;
             }
-
+            
+            // Actualizar interfaz
             actualizarEstadisticas();
             actualizarGraficos();
             
-            let mensaje = '';
-            let icono = '📡';
-            
-            switch(tipo) {
-                case 'movimiento':
-                    icono = '🚗';
-                    if (valor.includes('giro')) icono = '🔄';
-                    if (valor === 'detener') icono = '🛑';
-                    mensaje = 'MOVIMIENTO: ' + valor.toUpperCase() + ' - Robot Alpha';
-                    break;
-                case 'obstaculo':
-                    icono = '🚨';
-                    mensaje = 'OBSTÁCULO: Detectado a ' + valor + 'cm - Protocolo de evasión activado';
-                    break;
-                case 'demo':
-                    icono = '🤖';
-                    mensaje = 'DEMO: Secuencia ' + valor + ' - Navegación automática iniciada';
-                    break;
+            // Mostrar en log
+            let icono = '🚗';
+            if (tipo.includes('giro')) {
+                icono = '🔄';
+            } else if (tipo === 'detener') {
+                icono = '🛑';
             }
             
-            agregarLog(icono + ' ' + mensaje);
+            agregarLog(`${icono} MOVIMIENTO: ${tipo.toUpperCase()} - Dispositivo ${data.dispositivo_id}`);
+        });
+
+        socket.on('obstaculo_detectado', (data) => {
+            console.log('📡 Evento recibido en MONITOREO:', data);
+            estadisticas.obstaculos++;
+            actualizarEstadisticas();
+            actualizarGraficos();
+            
+            agregarLog(`🚨 ALERTA: Obstáculo a ${data.distancia}cm - Dispositivo ${data.dispositivo_id}`);
+        });
+
+        socket.on('demo_ejecutada', (data) => {
+            console.log('📡 Evento recibido en MONITOREO:', data);
+            estadisticas.demos++;
+            actualizarEstadisticas();
+            actualizarGraficos();
+            
+            agregarLog(`🤖 DEMO: Secuencia ${data.secuencia_id} - Dispositivo ${data.dispositivo_id}`);
+        });
+
+        socket.on('disconnect', () => {
+            agregarLog('❌ WebSocket: Conexión perdida con el servidor');
+        });
+
+        // ==================== FUNCIONES PRINCIPALES ====================
+        async function cargarDatosReales() {
+            try {
+                // Cargar estadísticas REALES desde el servidor
+                const response = await fetch('/api/estadisticas');
+                const stats = await response.json();
+                
+                if (!stats.error) {
+                    // Usar datos REALES de la base de datos
+                    estadisticas.movimientos = stats.total_movimientos || 0;
+                    estadisticas.obstaculos = stats.total_obstaculos || 0;
+                    estadisticas.demos = stats.total_demos || 0;
+                    
+                    // Cargar dispositivos
+                    await cargarDispositivos();
+                    
+                    // Cargar tipos de movimiento desde la base de datos
+                    await cargarTiposMovimientoReales();
+                    
+                    // Inicializar gráficos con datos reales
+                    actualizarEstadisticas();
+                    actualizarGraficos();
+                    
+                    agregarLog('📊 Sistema de monitoreo inicializado con datos reales');
+                    agregarLog(`📈 Movimientos totales: ${estadisticas.movimientos}`);
+                    agregarLog(`🚨 Obstáculos detectados: ${estadisticas.obstaculos}`);
+                    agregarLog(`🤖 Demos ejecutadas: ${estadisticas.demos}`);
+                }
+                
+            } catch (error) {
+                agregarLog('❌ ERROR: No se pudieron cargar los datos iniciales');
+                console.error('Error:', error);
+            }
+        }
+
+        async function cargarTiposMovimientoReales() {
+            try {
+                // Cargar movimientos desde la base de datos para inicializar la gráfica
+                const response = await fetch('/api/dispositivos');
+                const dispositivos = await response.json();
+                
+                if (!dispositivos.error && dispositivos.length > 0) {
+                    // Inicializar con algunos datos de ejemplo si no hay movimientos
+                    if (estadisticas.movimientos === 0) {
+                        // Datos iniciales para que la gráfica no esté vacía
+                        estadisticas.tiposMovimiento = {
+                            'adelante': 2,
+                            'atras': 1,
+                            'izquierda': 1,
+                            'derecha': 1,
+                            'giro_90': 0,
+                            'giro_360': 0,
+                            'detener': 1
+                        };
+                    }
+                }
+            } catch (error) {
+                console.log('No se pudieron cargar tipos de movimiento específicos');
+            }
+        }
+
+        async function cargarDispositivos() {
+            try {
+                const response = await fetch('/api/dispositivos');
+                const dispositivos = await response.json();
+                
+                if (dispositivos.error) {
+                    agregarLog('❌ ERROR: No se pueden cargar los dispositivos');
+                    return;
+                }
+                
+                document.getElementById('totalDispositivos').textContent = dispositivos.length;
+                
+                const listaDiv = document.getElementById('listaDispositivos');
+                listaDiv.innerHTML = '';
+                
+                if (dispositivos.length === 0) {
+                    listaDiv.innerHTML = `
+                        <div class="col-12 text-center">
+                            <p class="text-muted">No hay dispositivos registrados</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                dispositivos.forEach(disp => {
+                    const dispCard = `
+                        <div class="col-md-6 mb-3">
+                            <div class="dispositivo-card">
+                                <h5><i class="fas fa-microchip"></i> ${disp.nombre}</h5>
+                                <p class="mb-1"><strong>ID:</strong> ${disp.dispositivo_id}</p>
+                                <p class="mb-1"><strong>IP:</strong> ${disp.ip_address}</p>
+                                <p class="mb-1"><strong>Ubicación:</strong> ${disp.ciudad}, ${disp.pais}</p>
+                                <p class="mb-0">
+                                    <strong>Estado:</strong> 
+                                    <span class="badge bg-success">ACTIVO</span>
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                    listaDiv.innerHTML += dispCard;
+                });
+                
+            } catch (error) {
+                agregarLog('❌ ERROR: No se puede conectar al servidor para cargar dispositivos');
+            }
         }
 
         function actualizarEstadisticas() {
@@ -294,22 +390,27 @@
         }
 
         function actualizarGraficos() {
+            // Gráfico de tipos de movimiento
             const ctxMov = document.getElementById('chartMovimientos');
             const sinDatosMov = document.getElementById('sinDatosMovimientos');
             
             if (ctxMov) {
+                // Destruir gráfico anterior si existe
                 if (window.movimientosChart) {
                     window.movimientosChart.destroy();
                 }
                 
+                // Filtrar tipos de movimiento que tienen datos
                 const tiposConDatos = Object.entries(estadisticas.tiposMovimiento)
                     .filter(([tipo, count]) => count > 0);
                 
                 if (tiposConDatos.length > 0) {
+                    // Mostrar gráfico
                     sinDatosMov.style.display = 'none';
+                    ctxMov.style.display = 'block';
                     
                     const labels = tiposConDatos.map(([tipo, count]) => 
-                        tipo.charAt(0).toUpperCase() + tipo.slice(1).replace('_', ' ')
+                        tipo.charAt(0).toUpperCase() + tipo.slice(1)
                     );
                     const data = tiposConDatos.map(([tipo, count]) => count);
                     
@@ -322,11 +423,11 @@
                                 data: data,
                                 backgroundColor: [
                                     '#007bff', '#28a745', '#ffc107', '#dc3545', 
-                                    '#6f42c1', '#17a2b8', '#20c997'
+                                    '#6f42c1', '#17a2b8', '#20c997', '#fd7e14'
                                 ],
                                 borderColor: [
                                     '#0056b3', '#1e7e34', '#e0a800', '#c82333',
-                                    '#563d7c', '#138496', '#1aa179'
+                                    '#563d7c', '#138496', '#1aa179', '#e95e00'
                                 ],
                                 borderWidth: 1
                             }]
@@ -369,22 +470,29 @@
                         }
                     });
                 } else {
+                    // Mostrar mensaje de no datos
                     sinDatosMov.style.display = 'block';
+                    ctxMov.style.display = 'none';
                 }
             }
 
+            // Gráfico de distribución de eventos
             const ctxEv = document.getElementById('chartEventos');
             const sinDatosEv = document.getElementById('sinDatosEventos');
             
             if (ctxEv) {
+                // Destruir gráfico anterior si existe
                 if (window.eventosChart) {
                     window.eventosChart.destroy();
                 }
                 
+                // Solo crear gráfico si hay datos
                 const totalEventos = estadisticas.movimientos + estadisticas.obstaculos + estadisticas.demos;
                 
                 if (totalEventos > 0) {
+                    // Mostrar gráfico
                     sinDatosEv.style.display = 'none';
+                    ctxEv.style.display = 'block';
                     
                     window.eventosChart = new Chart(ctxEv, {
                         type: 'pie',
@@ -420,7 +528,9 @@
                         }
                     });
                 } else {
+                    // Mostrar mensaje de no datos
                     sinDatosEv.style.display = 'block';
+                    ctxEv.style.display = 'none';
                 }
             }
         }
@@ -430,8 +540,9 @@
             const fecha = new Date().toLocaleTimeString();
             const logItem = document.createElement('div');
             logItem.className = 'evento';
-            logItem.innerHTML = '<small class="text-info">[' + fecha + ']</small> ' + mensaje;
+            logItem.innerHTML = `<small class="text-info">[${fecha}]</small> ${mensaje}`;
             
+            // Remover mensaje inicial si existe
             if (logDiv.children.length === 1 && logDiv.children[0].classList.contains('text-center')) {
                 logDiv.innerHTML = '';
             }
@@ -439,38 +550,18 @@
             logDiv.appendChild(logItem);
             logDiv.scrollTop = logDiv.scrollHeight;
             
+            // Limitar a 100 eventos
             if (logDiv.children.length > 100) {
                 logDiv.removeChild(logDiv.firstChild);
             }
         }
 
-        // Escuchar eventos del control
-        window.addEventListener('storage', function(e) {
-            if (e.key === 'ultimoEventoIoT' && e.newValue) {
-                const evento = JSON.parse(e.newValue);
-                if (evento.tipo && evento.valor) {
-                    procesarEvento(evento.tipo, evento.valor);
-                }
-            }
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            cargarDispositivos();
-            actualizarEstadisticas();
-            actualizarGraficos();
-            
-            agregarLog('🛰️  SISTEMA: Monitoreo IoT Inicializado - Examen Tema 2');
-            agregarLog('📊 MODO: Demo - Datos simulados para GitHub Pages');
-            agregarLog('🔍 MONITOREO: 2 dispositivos detectados');
-            agregarLog('📈 ESTADÍSTICAS: Sistema listo para registrar eventos');
-            agregarLog('💡 CONSEJO: Abre la página de Control para generar eventos');
-        });
-
+        // Inicializar
+        actualizarEstadisticas();
+        // Inicializar gráficos después de un pequeño delay para asegurar que el DOM esté listo
         setTimeout(() => {
-            if (estadisticas.movimientos === 0) {
-                agregarLog('💡 SISTEMA: Ejecuta comandos en la página de Control para ver estadísticas en tiempo real');
-            }
-        }, 3000);
+            actualizarGraficos();
+        }, 500);
     </script>
 </body>
 </html>
